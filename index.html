@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffd166">
+  <title>🎮 奕伶老師的命運輪盤抽籤機 🎲</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffe3f0;
+      --panel: #ffffff;
+      --line: #2b2b2b;
+      --text: #2b2b2b;
+      --muted: #555555;
+      --accent: #ff6b8a;
+      --accent-strong: #ff477e;
+      --danger: #ff3366;
+      --btn-bg: #ffd166;
+      font-family: "Varela Round", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      /* 依據螢幕寬度自適應動態根字級 */
+      font-size: clamp(14px, 1.15vw, 20px);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background-color: var(--bg);
+      background-image: radial-gradient(#ffb6c1 20%, transparent 20%);
+      background-size: 28px 28px;
+      overflow-x: hidden;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+
+    /* 滿版響應式外框 */
+    .page {
+      width: min(96vw, 1750px);
+      margin: 0 auto;
+      padding: clamp(10px, 1.8vw, 24px) clamp(8px, 1.5vw, 20px) 40px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
+    .bgm-btn {
+      background: #8ce6d0;
+      border: 3px solid var(--line);
+      border-radius: 14px;
+      padding: clamp(6px, 0.8vw, 10px) clamp(12px, 1.4vw, 22px);
+      font-size: clamp(0.95rem, 1.1vw, 1.2rem);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 2.5px 4px 0 var(--line);
+      transition: all 0.1s;
+    }
+    .bgm-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--line);
+    }
+
+    /* 頂部標題區：絕對一行完整呈現 */
+    header {
+      text-align: center;
+      margin-bottom: clamp(12px, 2vh, 24px);
+      text-shadow: 2px 2px 0px #fff;
+      width: 100%;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 0;
+      white-space: nowrap;
+      font-size: clamp(1.2rem, 3.8vw, 3.1rem);
+      letter-spacing: .04em;
+      color: var(--accent-strong);
+      text-shadow: 3px 3px 0 var(--line), -1px -1px 0 #fff;
+      line-height: 1.2;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--text);
+      white-space: nowrap;
+      font-size: clamp(0.85rem, 1.7vw, 1.35rem);
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+
+    /* 雙欄主佈局 */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: clamp(14px, 2vw, 28px);
+      align-items: start;
+    }
+    .left-col, .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.8vw, 24px);
+      width: 100%;
+    }
+
+    /* 立體電玩風卡片面板 */
+    .panel {
+      background: var(--panel);
+      border: 4px solid var(--line);
+      border-radius: clamp(18px, 2vw, 26px);
+      padding: clamp(14px, 1.8vw, 24px);
+      box-shadow: 6px 6px 0px var(--line);
+    }
+
+    .setup { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 1.5vw, 20px); }
+    .setup .wide { grid-column: 1 / -1; }
+    .section-title {
+      margin: 0 0 12px;
+      font-size: clamp(1.15rem, 1.3vw, 1.45rem);
+      font-weight: 900;
+      color: #43506c;
+      white-space: nowrap;
+    }
+
+    .mode-tabs { display: flex; gap: 10px; }
+    .mode-tab {
+      flex: 1;
+      min-height: clamp(48px, 6vh, 62px);
+      border: 3px solid var(--line);
+      border-radius: 14px;
+      background: #f0f4f8;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: clamp(1.05rem, 1.2vw, 1.25rem);
+      box-shadow: 0 4px 0 var(--line);
+      transition: transform 0.1s, box-shadow 0.1s;
+      white-space: nowrap;
+    }
+    .mode-tab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+    .mode-tab[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+    .number-fields { display: flex; align-items: end; gap: 10px; }
+    .number-fields .field { flex: 1; }
+    .range-dash { padding-bottom: 12px; color: var(--line); font-weight: 900; font-size: 1.3rem; }
+    label, .field-label { display: block; margin-bottom: 6px; color: var(--text); font-size: clamp(1rem, 1.1vw, 1.2rem); font-weight: 800; }
+    
+    input[type="number"], textarea, input[type="text"] {
+      width: 100%;
+      color: var(--text);
+      background: #fff;
+      border: 3px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+      font-weight: 800;
+    }
+    input[type="number"], input[type="text"] { min-height: clamp(46px, 5.5vh, 58px); padding: 8px 14px; font-size: clamp(1.1rem, 1.25vw, 1.4rem); }
+    textarea { min-height: clamp(130px, 18vh, 180px); padding: 12px; resize: vertical; line-height: 1.5; font-size: clamp(1.05rem, 1.15vw, 1.3rem); }
+    input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px #ffb3c6; }
+    .help { margin: 8px 0 0; color: var(--muted); font-size: clamp(0.85rem, 0.95vw, 1.05rem); line-height: 1.4; font-weight: 700; }
+
+    .options-row { display: grid; grid-template-columns: minmax(140px, .9fr) minmax(0, 1.3fr); gap: 16px; align-items: end; }
+    .quantity-input { max-width: 200px; }
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; min-height: 52px; cursor: pointer; color: var(--text); font-size: clamp(1.05rem, 1.2vw, 1.25rem); font-weight: 800; white-space: nowrap; }
+    .toggle-wrap input { width: 26px; height: 26px; accent-color: var(--accent-strong); cursor: pointer; }
+
+    .remaining {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--accent-strong);
+      font-size: clamp(0.95rem, 1.1vw, 1.15rem);
+      font-weight: 800;
+      background: #fff0f3;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 2px dashed var(--accent);
+      white-space: nowrap;
+    }
+    .remaining strong { font-size: 1.45rem; }
+
+    /* 輪盤操作右面板：隨視窗寬高自動適應 */
+    .draw-panel {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .round-indicator {
+      display: inline-block;
+      min-height: 34px;
+      margin-bottom: 8px;
+      font-size: clamp(1.05rem, 1.25vw, 1.35rem);
+      font-weight: 900;
+      color: var(--accent-strong);
+      background: #fff0f5;
+      padding: 4px 16px;
+      border-radius: 12px;
+      border: 2px solid var(--accent);
+      white-space: nowrap;
+    }
+    .round-indicator:empty { visibility: hidden; }
+    
+    /* 輪盤舞台：依視窗高度與寬度動態自適應 */
+    .wheel-stage {
+      position: relative;
+      width: min(520px, 86vw, 54vh);
+      aspect-ratio: 1 / 1;
+      margin: 10px auto clamp(16px, 2.5vh, 30px);
+    }
+
+    /* 指向 12 點鐘方向的上方指針 */
+    .wheel-pointer {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: clamp(18px, 2.2vw, 24px) solid transparent;
+      border-right: clamp(18px, 2.2vw, 24px) solid transparent;
+      border-top: clamp(36px, 4.2vw, 48px) solid #ff3366;
+      filter: drop-shadow(0 4px 0 var(--line));
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: clamp(5px, 0.6vw, 7px) solid var(--line);
+      box-shadow: 0 clamp(8px, 1.2vw, 14px) 0 var(--line), inset 0 0 20px rgba(0,0,0,0.3);
+      background: #fff;
+      display: block;
+      transition: transform 2.8s cubic-bezier(0.15, 0.9, 0.1, 1);
+    }
+
+    .wheel-center-hub {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(50px, 6vw, 68px);
+      height: clamp(50px, 6vw, 68px);
+      border-radius: 50%;
+      background: #ffd166;
+      border: 4px solid var(--line);
+      box-shadow: 0 3px 0 var(--line);
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+      pointer-events: none;
+    }
+
+    .wheel-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      padding: 16px;
+    }
+    
+    .stage-message { 
+      background: rgba(255, 255, 255, 0.96);
+      padding: clamp(10px, 1.5vw, 16px) clamp(16px, 2vw, 26px);
+      border-radius: 18px;
+      border: 4px solid var(--line);
+      box-shadow: 5px 5px 0 rgba(0,0,0,0.18);
+      color: var(--text);
+      font-size: clamp(1.15rem, 1.35vw, 1.45rem);
+      font-weight: 900; 
+      text-align: center;
+      line-height: 1.45;
+    }
+    
+    .result-chip {
+      display: inline-grid;
+      min-width: clamp(75px, 9vw, 95px);
+      padding: clamp(10px, 1.2vw, 14px) clamp(16px, 2vw, 22px);
+      place-items: center;
+      border: 4px solid var(--line);
+      border-radius: 18px;
+      color: var(--line);
+      background: var(--btn-bg);
+      box-shadow: 4px 4px 0 var(--line);
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+      animation: pop-in .45s cubic-bezier(.15, 1.5, .45, 1) both;
+    }
+    
+    @keyframes pop-in {
+      from { opacity: 0; transform: scale(.4) rotate(-15deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    .draw-button {
+      width: min(460px, 100%);
+      min-height: clamp(64px, 8vh, 84px);
+      border: 4px solid var(--line);
+      border-radius: 20px;
+      color: #fff;
+      background: var(--accent-strong);
+      box-shadow: 0 8px 0 var(--line);
+      cursor: pointer;
+      font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+      transition: transform .1s ease, box-shadow .1s ease;
+      white-space: nowrap;
+    }
+    .draw-button:active:not(:disabled) { transform: translateY(8px); box-shadow: 0 0 0 var(--line); }
+    button:disabled { cursor: wait; opacity: .7; filter: grayscale(30%); }
+
+    .message {
+      min-height: 1.4em;
+      margin: 12px 0 0;
+      color: var(--danger);
+      font-size: clamp(1rem, 1.15vw, 1.25rem);
+      font-weight: 900;
+      background: #ffe3e3;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 2.5px solid var(--danger);
+    }
+    .message:empty { display: none; }
+
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .history-heading h2 { margin: 0; font-size: clamp(1.25rem, 1.4vw, 1.55rem); font-weight: 900; color: #43506c; }
+    .reset-button {
+      min-height: clamp(42px, 5vh, 50px);
+      padding: 6px 18px;
+      border: 3px solid var(--line);
+      border-radius: 12px;
+      background: #ff9f9f;
+      color: var(--line);
+      cursor: pointer;
+      font-weight: 900;
+      font-size: clamp(0.95rem, 1.05vw, 1.15rem);
+      box-shadow: 0 4px 0 var(--line);
+      white-space: nowrap;
+    }
+    .reset-button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+    .history-list { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; max-height: clamp(200px, 30vh, 350px); overflow-y: auto; }
+    .history-item {
+      display: grid;
+      grid-template-columns: clamp(130px, 14vw, 160px) 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: #fdfbf7;
+      border: 3px solid var(--line);
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.06);
+    }
+    .history-time { color: var(--muted); font-size: clamp(0.9rem, 1vw, 1.05rem); font-weight: 700; white-space: nowrap; }
+    .history-results { font-size: clamp(1.1rem, 1.25vw, 1.35rem); font-weight: 900; color: var(--accent-strong); overflow-wrap: anywhere; }
+    .empty-history { margin: 14px 0 0; color: var(--muted); font-weight: 800; font-size: 1.05rem; }
+
+    .confetti-layer { position: fixed; inset: 0; z-index: 100; overflow: hidden; pointer-events: none; }
+    .confetti {
+      position: absolute;
+      top: -20px;
+      left: var(--x);
+      width: var(--size);
+      height: calc(var(--size) * 1.55);
+      border-radius: 2px;
+      background: var(--color);
+      border: 1.5px solid rgba(0,0,0,0.2);
+      animation: confetti-fall var(--duration) cubic-bezier(.15, .55, .35, 1) var(--delay) forwards;
+    }
+    @keyframes confetti-fall {
+      to { transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin)); opacity: .15; }
+    }
+
+    /* 平板與手機直式檢視自動切換為好滑動的單欄 */
+    @media (max-width: 980px) {
+      .app-layout { grid-template-columns: 1fr; }
+      .page { width: 95vw; padding: 12px 10px 40px; }
+      .setup { grid-template-columns: 1fr; gap: 14px;}
+      .setup .wide { grid-column: auto; }
+      .options-row { grid-template-columns: 1fr; gap: 8px; }
+      .quantity-input { max-width: none; }
+      .wheel-stage { width: min(340px, 86vw); margin: 10px auto 20px;}
+      .history-item { grid-template-columns: 1fr; gap: 4px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+      .confetti { animation-duration: .8s !important; }
+      .draw-button, .mode-tab, .reset-button, .bgm-btn { transition: none; }
+      #wheelCanvas { transition: transform 0.5s ease-out !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="top-bar">
+      <button id="bgmToggle" class="bgm-btn">🎵 開啟 8-Bit 配樂</button>
+    </div>
+
+    <header>
+      <h1>🎮 奕伶老師的命運輪盤抽籤機 🎲</h1>
+      <p class="subtitle">✨ 準備好了嗎？讓每個人都有機會！ ✨</p>
+    </header>
+
+    <div class="app-layout">
+      <!-- 左欄：模式設定與歷史紀錄 -->
+      <div class="left-col">
+        <section class="panel setup" aria-label="抽籤設定">
+          <div>
+            <h2 class="section-title">① 🕹️ 選擇抽籤模式</h2>
+            <div class="mode-tabs" role="group" aria-label="抽籤模式">
+              <button class="mode-tab" id="numberModeButton" type="button" aria-pressed="true">🔢 號碼模式</button>
+              <button class="mode-tab" id="nameModeButton" type="button" aria-pressed="false">📝 姓名模式</button>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="section-title">② 🎯 設定抽籤範圍</h2>
+            <div id="numberSettings" class="number-fields">
+              <div class="field">
+                <label for="numberStart">起始號碼</label>
+                <input id="numberStart" type="number" step="1" value="1" inputmode="numeric">
+              </div>
+              <span class="range-dash" aria-hidden="true">～</span>
+              <div class="field">
+                <label for="numberEnd">結束號碼</label>
+                <input id="numberEnd" type="number" step="1" value="30" inputmode="numeric">
+              </div>
+            </div>
+            <div id="nameSettings" hidden>
+              <label for="nameList">學生名單（每行一位）</label>
+              <textarea id="nameList" placeholder="王小明&#10;陳小華&#10;林同學"></textarea>
+              <p class="help">💡 名單會自動保存在這台裝置的瀏覽器中。</p>
+            </div>
+          </div>
+
+          <div class="wide options-row">
+            <div>
+              <label for="drawCount">③ 🎲 一次抽出幾位？</label>
+              <input class="quantity-input" id="drawCount" type="number" min="1" step="1" value="1" inputmode="numeric">
+            </div>
+            <div>
+              <label class="toggle-wrap" for="noRepeat">
+                <input id="noRepeat" type="checkbox">
+                <span>🔕 不重複抽籤</span>
+              </label>
+              <div class="remaining" id="remaining" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="wide">
+            <label for="exclusions">④ 🚫 排除號碼或姓名（選填）</label>
+            <input id="exclusions" type="text" placeholder="例如：5, 12" aria-describedby="exclusionHelp">
+            <p class="help" id="exclusionHelp">📌 可用逗號分隔；姓名模式請輸入完整姓名。變更排除名單會立即套用。</p>
+          </div>
+        </section>
+
+        <section class="panel history" aria-label="抽籤紀錄">
+          <div class="history-heading">
+            <h2>🏆 抽籤紀錄</h2>
+            <button class="reset-button" id="resetButton" type="button">🗑️ 一鍵重置</button>
+          </div>
+          <ol class="history-list" id="historyList"></ol>
+          <p class="empty-history" id="emptyHistory">還沒有抽籤紀錄哦！</p>
+        </section>
+      </div>
+
+      <!-- 右欄：高精度 Canvas 命運輪盤與開始按鈕 -->
+      <div class="right-col">
+        <section class="panel draw-panel" aria-label="抽籤結果">
+          <div class="round-indicator" id="roundIndicator"></div>
+          <div class="wheel-stage" id="stage" aria-live="polite" aria-atomic="false">
+            <div class="wheel-pointer"></div>
+            <canvas id="wheelCanvas" width="900" height="900"></canvas>
+            <div class="wheel-center-hub">⭐</div>
+            <div class="wheel-overlay" id="wheelOverlay">
+              <div class="stage-message">👇 按下按鈕<br>轉動輪盤抽出幸運兒！</div>
+            </div>
+          </div>
+
+          <button class="draw-button" id="drawButton" type="button">🌟 轉動輪盤 🌟</button>
+          <p class="message" id="message" role="alert"></p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "classroomLottery.names.v1";
+      const MAX_NUMBER_RANGE = 100000;
+      const numberModeButton = document.getElementById("numberModeButton");
+      const nameModeButton = document.getElementById("nameModeButton");
+      const numberSettings = document.getElementById("numberSettings");
+      const nameSettings = document.getElementById("nameSettings");
+      const numberStart = document.getElementById("numberStart");
+      const numberEnd = document.getElementById("numberEnd");
+      const nameList = document.getElementById("nameList");
+      const drawCount = document.getElementById("drawCount");
+      const noRepeat = document.getElementById("noRepeat");
+      const exclusions = document.getElementById("exclusions");
+      const remaining = document.getElementById("remaining");
+      const wheelCanvas = document.getElementById("wheelCanvas");
+      const ctx = wheelCanvas.getContext("2d");
+      const wheelOverlay = document.getElementById("wheelOverlay");
+      const roundIndicator = document.getElementById("roundIndicator");
+      const drawButton = document.getElementById("drawButton");
+      const resetButton = document.getElementById("resetButton");
+      const message = document.getElementById("message");
+      const historyList = document.getElementById("historyList");
+      const emptyHistory = document.getElementById("emptyHistory");
+      const confettiLayer = document.getElementById("confettiLayer");
+      const bgmToggle = document.getElementById("bgmToggle");
+
+      let mode = "number";
+      let drawnIds = new Set();
+      let history = [];
+      let isDrawing = false;
+      let audioContext = null;
+      let currentRotation = 0;
+
+      const WHEEL_COLORS = [
+        '#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', 
+        '#a29bfe', '#fd79a8', '#00cec9', '#fab1a0',
+        '#81ecec', '#fdcb6e', '#e17055', '#6c5ce7'
+      ];
+
+      let bgmCtx = null;
+      let isBgmPlaying = false;
+      let bgmTimer = null;
+      let nextNoteTime = 0;
+      let noteIndex = 0;
+      const bgmNotes = [
+        523.25, 659.25, 783.99, 1046.50,
+        783.99, 659.25, 523.25, 392.00,
+        523.25, 659.25, 783.99, 1046.50,
+        1318.51, 1046.50, 783.99, 659.25
+      ];
+
+      function scheduleBGM() {
+        if (!isBgmPlaying) return;
+        while (nextNoteTime < bgmCtx.currentTime + 0.1) {
+          playBGMNote(bgmNotes[noteIndex], nextNoteTime);
+          nextNoteTime += 0.15; 
+          noteIndex = (noteIndex + 1) % bgmNotes.length;
+        }
+        bgmTimer = setTimeout(scheduleBGM, 50);
+      }
+
+      function playBGMNote(freq, time) {
+        const osc = bgmCtx.createOscillator();
+        const gain = bgmCtx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0.015, time); 
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+        osc.connect(gain);
+        gain.connect(bgmCtx.destination);
+        osc.start(time);
+        osc.stop(time + 0.14);
+      }
+
+      bgmToggle.addEventListener("click", (e) => {
+        if (!bgmCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return alert("您的瀏覽器不支援音效播放");
+          bgmCtx = new AudioContextClass();
+        }
+        if (bgmCtx.state === "suspended") bgmCtx.resume();
+
+        isBgmPlaying = !isBgmPlaying;
+        if (isBgmPlaying) {
+          e.target.textContent = "🔊 暫停配樂";
+          nextNoteTime = bgmCtx.currentTime + 0.1;
+          scheduleBGM();
+        } else {
+          e.target.textContent = "🎵 開啟 8-Bit 配樂";
+          clearTimeout(bgmTimer);
+        }
+      });
+
+      function setMessage(text) { message.textContent = text; }
+
+      function setMode(nextMode) {
+        if (mode === nextMode) return;
+        mode = nextMode;
+        numberModeButton.setAttribute("aria-pressed", String(mode === "number"));
+        nameModeButton.setAttribute("aria-pressed", String(mode === "name"));
+        numberSettings.hidden = mode !== "number";
+        nameSettings.hidden = mode !== "name";
+        setMessage("");
+        updateRemaining();
+      }
+
+      function parseExclusions() {
+        const pattern = mode === "number" ? /[,\s，、;；]+/ : /[\n,，、;；]+/;
+        return new Set(exclusions.value.split(pattern).map(v => v.trim()).filter(Boolean));
+      }
+
+      function getPool() {
+        const excluded = parseExclusions();
+        if (mode === "number") {
+          const start = Number(numberStart.value);
+          const end = Number(numberEnd.value);
+          if (numberStart.value.trim() === "" || numberEnd.value.trim() === "" ||
+              !Number.isSafeInteger(start) || !Number.isSafeInteger(end)) {
+            return { error: "請輸入有效的整數起訖號碼。" };
+          }
+          if (end < start) return { error: "結束號碼必須大於或等於起始號碼。" };
+          const size = end - start + 1;
+          if (!Number.isSafeInteger(size) || size > MAX_NUMBER_RANGE) {
+            return { error: `號碼範圍最多可設定 ${MAX_NUMBER_RANGE.toLocaleString("zh-TW")} 個號碼。` };
+          }
+          const items = [];
+          for (let number = start; number <= end; number += 1) {
+            if (!excluded.has(String(number))) items.push({ id: `number:${number}`, label: String(number) });
+          }
+          return { items };
+        }
+
+        const names = nameList.value.split(/\r?\n/).map(n => n.trim()).filter(Boolean);
+        const items = names
+          .map((name, index) => ({ id: `name:${index}`, label: name }))
+          .filter(item => !excluded.has(item.label));
+        return { items };
+      }
+
+      function getAvailableItems() {
+        const pool = getPool();
+        if (pool.error) return pool;
+        if (noRepeat.checked) {
+          pool.items = pool.items.filter(item => !drawnIds.has(item.id));
+        }
+        return pool;
+      }
+
+      function renderWheel() {
+        const pool = getAvailableItems();
+        const W = wheelCanvas.width;
+        const H = wheelCanvas.height;
+        const cx = W / 2;
+        const cy = H / 2;
+        const radius = cx - 18;
+
+        ctx.clearRect(0, 0, W, H);
+
+        if (pool.error || pool.items.length === 0) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+          ctx.fillStyle = "#e6ecf2";
+          ctx.fill();
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "#2b2b2b";
+          ctx.stroke();
+          return;
+        }
+
+        const items = pool.items;
+        const total = items.length;
+        const sliceAngle = (2 * Math.PI) / total;
+
+        let fontSize = 34;
+        if (total > 12) fontSize = 28;
+        if (total > 24) fontSize = 22;
+        if (total > 45) fontSize = 17;
+        if (total > 80) fontSize = 13;
+
+        items.forEach((item, i) => {
+          const startAngle = -Math.PI / 2 + i * sliceAngle;
+          const endAngle = startAngle + sliceAngle;
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, radius, startAngle, endAngle);
+          ctx.closePath();
+          ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+          ctx.fill();
+
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = "#2b2b2b";
+          ctx.stroke();
+
+          const midAngle = startAngle + sliceAngle / 2;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(midAngle);
+
+          ctx.textAlign = "right";
+          ctx.textBaseline = "middle";
+          ctx.font = `900 ${fontSize}px "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
+
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = "#ffffff";
+          ctx.strokeText(item.label, radius - 30, 0);
+          ctx.fillStyle = "#2b2b2b";
+          ctx.fillText(item.label, radius - 30, 0);
+
+          ctx.restore();
+        });
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = "#2b2b2b";
+        ctx.stroke();
+      }
+
+      function updateRemaining() {
+        const pool = getAvailableItems();
+        if (pool.error) {
+          remaining.textContent = "";
+          renderWheel();
+          return;
+        }
+        remaining.innerHTML = `${noRepeat.checked ? "剩餘可抽" : "目前可抽"} <strong>${pool.items.length}</strong> 名`;
+        renderWheel();
+      }
+
+      function renderHistory() {
+        historyList.replaceChildren();
+        emptyHistory.hidden = history.length > 0;
+        history.forEach(entry => {
+          const row = document.createElement("li");
+          row.className = "history-item";
+          const time = document.createElement("time");
+          time.className = "history-time";
+          time.dateTime = entry.isoTime;
+          time.textContent = entry.displayTime;
+          const result = document.createElement("div");
+          result.className = "history-results";
+          result.textContent = `${entry.mode === "number" ? "🎟️ 號碼" : "🎫 姓名"}：${entry.labels.join("、")}`;
+          row.append(time, result);
+          historyList.append(row);
+        });
+      }
+
+      function prepareAudio() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        try {
+          if (!audioContext || audioContext.state === "closed") audioContext = new AudioContextClass();
+          if (audioContext.state === "suspended") audioContext.resume();
+          return audioContext;
+        } catch (error) { return null; }
+      }
+
+      function playTickSound(ctx) {
+        if (!ctx) return;
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(650, ctx.currentTime);
+          gain.gain.setValueAtTime(0.06, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.035);
+        } catch (e) {}
+      }
+
+      function playCelebrationSound(context) {
+        if (!context) return;
+        try {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((frequency, index) => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            const startAt = context.currentTime + index * 0.11;
+            oscillator.type = "square";
+            oscillator.frequency.setValueAtTime(frequency, startAt);
+            gain.gain.setValueAtTime(0.0001, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.12, startAt + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.32);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + 0.34);
+          });
+        } catch (error) {}
+      }
+
+      function celebrate() {
+        const colors = ["#8ce6d0", "#ffd166", "#ff6b8a", "#9b8cff", "#ffffff"];
+        for (let i = 0; i < 60; i += 1) {
+          const piece = document.createElement("span");
+          piece.className = "confetti";
+          piece.style.setProperty("--x", `${Math.random() * 100}%`);
+          piece.style.setProperty("--size", `${7 + Math.random() * 9}px`);
+          piece.style.setProperty("--color", colors[Math.floor(Math.random() * colors.length)]);
+          piece.style.setProperty("--duration", `${1.5 + Math.random() * 1.2}s`);
+          piece.style.setProperty("--delay", `${Math.random() * 0.3}s`);
+          piece.style.setProperty("--drift", `${Math.random() * 220 - 110}px`);
+          piece.style.setProperty("--spin", `${Math.random() * 1000 - 500}deg`);
+          confettiLayer.append(piece);
+          window.setTimeout(() => piece.remove(), 3200);
+        }
+      }
+
+      function setBusy(busy) {
+        isDrawing = busy;
+        document.querySelector(".setup").querySelectorAll("button, input, textarea").forEach(c => c.disabled = busy);
+        drawButton.disabled = busy;
+        resetButton.disabled = busy;
+      }
+
+      const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+      async function spinToOneWinner(winnerItem, currentPoolItems, soundContext) {
+        const winnerIndex = currentPoolItems.findIndex(item => item.id === winnerItem.id);
+        const total = currentPoolItems.length;
+        const sliceDeg = 360 / total;
+
+        const alphaFromTop = (winnerIndex + 0.5) * sliceDeg;
+        const targetMod = (360 - alphaFromTop) % 360;
+        const currentMod = currentRotation % 360;
+        let delta = targetMod - currentMod;
+        if (delta <= 0) delta += 360;
+
+        const spinDelta = (360 * 4) + delta;
+        currentRotation += spinDelta;
+
+        wheelCanvas.style.transition = "transform 2.8s cubic-bezier(0.15, 0.9, 0.1, 1)";
+        wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+
+        let tickInterval = 65;
+        let ticksPlayed = 0;
+        const maxTicks = 28;
+        function scheduleTick() {
+          if (ticksPlayed >= maxTicks) return;
+          playTickSound(soundContext);
+          ticksPlayed += 1;
+          tickInterval += 10;
+          setTimeout(scheduleTick, tickInterval);
+        }
+        setTimeout(scheduleTick, 50);
+
+        await sleep(2850);
+      }
+
+      async function startSequentialDraw() {
+        if (isDrawing) return;
+        setMessage("");
+
+        const pool = getAvailableItems();
+        if (pool.error) return setMessage("⚠️ " + pool.error);
+        if (pool.items.length === 0) return setMessage("⚠️ 目前轉盤上已經沒有名單了！");
+
+        const count = Number(drawCount.value);
+        if (drawCount.value.trim() === "" || !Number.isSafeInteger(count) || count < 1) {
+          return setMessage("⚠️ 抽出人數請輸入 1 或以上的整數。");
+        }
+        if (noRepeat.checked && count > pool.items.length) {
+          return setMessage(`⚠️ 人數不足：目前只剩 ${pool.items.length} 位可抽，請減少抽出人數或重置紀錄。`);
+        }
+        if (count > 1000) return setMessage("⚠️ 一次最多抽出 1,000 位，請調整抽出人數。");
+
+        const soundContext = prepareAudio();
+        setBusy(true);
+
+        const currentWinners = [];
+        let workingItems = [...pool.items];
+
+        for (let round = 1; round <= count; round += 1) {
+          roundIndicator.textContent = `🎯 正在抽出第 ${round} / ${count} 位幸運兒...`;
+          drawButton.textContent = `🌀 正在抽第 ${round} 位...`;
+          wheelOverlay.replaceChildren();
+
+          const randomIndex = Math.floor(Math.random() * workingItems.length);
+          const roundWinner = workingItems[randomIndex];
+          currentWinners.push(roundWinner);
+
+          await spinToOneWinner(roundWinner, workingItems, soundContext);
+
+          celebrate();
+          playCelebrationSound(soundContext);
+
+          const chip = document.createElement("div");
+          chip.className = "result-chip";
+          chip.innerHTML = count > 1 ? `<span style="font-size:0.5em;display:block;">第 ${round} 位</span>${roundWinner.label}` : roundWinner.label;
+          wheelOverlay.append(chip);
+
+          if (noRepeat.checked) {
+            drawnIds.add(roundWinner.id);
+            workingItems = workingItems.filter(item => item.id !== roundWinner.id);
+          }
+
+          if (round < count) {
+            await sleep(1800);
+
+            wheelCanvas.style.transition = "none";
+            currentRotation = currentRotation % 360;
+            wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+            void wheelCanvas.offsetHeight;
+
+            renderWheel();
+            updateRemaining();
+            wheelOverlay.replaceChildren();
+            await sleep(300);
+          }
+        }
+
+        roundIndicator.textContent = `🎊 已全部抽出完畢（共 ${count} 位）！`;
+        drawButton.textContent = "🌟 轉動輪盤 🌟";
+
+        if (count > 1) {
+          wheelOverlay.replaceChildren();
+          currentWinners.forEach((winner, idx) => {
+            const finalChip = document.createElement("div");
+            finalChip.className = "result-chip";
+            finalChip.style.fontSize = currentWinners.length > 3 ? "clamp(1.2rem, 1.8vw, 1.6rem)" : "clamp(1.6rem, 2.4vw, 2.2rem)";
+            finalChip.textContent = `${idx + 1}. ${winner.label}`;
+            wheelOverlay.append(finalChip);
+          });
+        }
+
+        const now = new Date();
+        history.unshift({
+          mode,
+          labels: currentWinners.map(item => item.label),
+          isoTime: now.toISOString(),
+          displayTime: now.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+        });
+
+        renderHistory();
+        updateRemaining();
+        setBusy(false);
+      }
+
+      function reset() {
+        if (isDrawing) return;
+        drawnIds.clear();
+        history = [];
+        currentRotation = 0;
+        wheelCanvas.style.transition = "none";
+        wheelCanvas.style.transform = `rotate(0deg)`;
+        void wheelCanvas.offsetHeight;
+
+        roundIndicator.textContent = "";
+        wheelOverlay.replaceChildren();
+        const prompt = document.createElement("div");
+        prompt.className = "stage-message";
+        prompt.innerHTML = "👇 按下按鈕<br>轉動輪盤抽出幸運兒！";
+        wheelOverlay.append(prompt);
+
+        renderHistory();
+        setMessage("");
+        updateRemaining();
+      }
+
+      numberModeButton.addEventListener("click", () => setMode("number"));
+      nameModeButton.addEventListener("click", () => setMode("name"));
+      drawButton.addEventListener("click", startSequentialDraw);
+      resetButton.addEventListener("click", reset);
+      noRepeat.addEventListener("change", updateRemaining);
+      exclusions.addEventListener("input", updateRemaining);
+      numberStart.addEventListener("input", updateRemaining);
+      numberEnd.addEventListener("input", updateRemaining);
+      nameList.addEventListener("input", () => {
+        drawnIds.clear();
+        updateRemaining();
+        try {
+          window.localStorage.setItem(STORAGE_KEY, nameList.value);
+        } catch (error) {}
+      });
+
+      try {
+        nameList.value = window.localStorage.getItem(STORAGE_KEY) || "";
+      } catch (error) {}
+
+      renderHistory();
+      updateRemaining();
+    })();
+  </script>
+</body>
+</html>
